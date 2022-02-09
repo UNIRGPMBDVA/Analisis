@@ -1,0 +1,134 @@
+---
+title: "Practica2_Inferencia"
+author: "Miguel Ángel Gragera García"
+date: "9/2/2022"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Cargar datos
+
+```{r cars}
+#install.packages("readr")
+#install.packages("dplyr")
+#install.packages("ggplot2")
+#install.packages("GGally")
+library (dplyr)
+ruta_Excel_CalidadAire <- "CalidadAire14_19_zonaProv.csv"
+data_CalidadAire <- read.csv(ruta_Excel_CalidadAire, header=TRUE, sep=';', 
+                             dec = ',')
+CalidadAire <- select(data_CalidadAire, Year, CodProv, Population,
+          PM10.population.weighted.average..ug.m3., 
+          PM2.5.population.weighted.average..ug.m3., 
+          NO2.population.weighted.average..ug.m3., 
+          O3.SOMO35.population.weighted.average..ug.days.m3.)
+
+names (CalidadAire) = c("Year", "CodProv", "Population", "Factor_PM10", 
+                        "Factor_PM2.5", "Factor_NO2", "Factor_O3")
+
+CalidadAire_Final <- CalidadAire %>% 
+  group_by(CodProv, Year) %>% 
+  summarise_all(sum)
+
+ruta_Excel_datosCP <- "Datos_CP_14_19_prov.csv"
+data_datosCP <- read.csv(ruta_Excel_datosCP, header=TRUE, sep=";")
+names (data_datosCP) = c("Year", "CodProv", "CIE10", "Provincia", 
+                         "SumaTotal", "value_f", "value_m")
+data_final <- merge(data_datosCP, CalidadAire_Final, by = c("Year", "CodProv"))
+data_final$Incidencia = round( (data_final$SumaTotal * 100000) / data_final$Population , 2 )
+head(data_final)
+
+```
+
+## BoxPlot 
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+boxplot(data_final$SumaTotal)
+```
+```{r}
+boxplot(data_final$Incidencia)
+```
+## Correlación
+```{r}
+Data_Correlacion_SumaTotal <- select(data_final, Factor_PM10, Factor_PM2.5, Factor_NO2, Factor_O3, Incidencia)
+round(cor(Data_Correlacion_SumaTotal),4)
+library(ggplot2)
+library(GGally)
+ggpairs(Data_Correlacion_SumaTotal, lower = list(continuos="smooth"), diag = list(continuos="barDiag"), axislabels="none")
+```
+
+## Selección variables menor pValues para la regresión
+
+```{r}
+modelo <- lm(Incidencia~Factor_PM10 + Factor_PM2.5 + Factor_NO2 + Factor_O3, data = Data_Correlacion_SumaTotal)
+summary(modelo)
+```
+## Regresión lineal múltiple
+
+Se seleccionan las variables factor03, factorPM2.5, FactorPm10
+
+```{r}
+library(caTools)
+library(caret)
+
+set.seed(123)
+split = sample.split(Data_Correlacion_SumaTotal$Incidencia, SplitRatio = 0.8)
+training_set = subset(Data_Correlacion_SumaTotal, split == TRUE)
+testing_set = subset(Data_Correlacion_SumaTotal, split == FALSE)
+
+regression =  lm(Incidencia~Factor_PM10 + Factor_PM2.5  + Factor_O3, data = training_set)
+
+y_pred = predict(regression, newdata = testing_set)
+
+RMSE(y_pred, testing_set$Incidencia)
+R2(y_pred, testing_set$Incidencia)
+y_pred
+testing_set$Incidencia
+y_compared = data.frame(y_pred,testing_set$Incidencia )
+
+plot( testing_set$Incidencia  - y_pred)
+```
+## Refresión SVR
+
+```{r}
+library(e1071)
+regression = svm(formula = Incidencia~Factor_PM10 + Factor_PM2.5  + Factor_O3,
+                 data = training_set, 
+                 type = "eps-regression", 
+                 kernel = "radial")
+y_pred = predict(regression, newdata =testing_set )
+RMSE(y_pred, testing_set$Incidencia)
+R2(y_pred, testing_set$Incidencia)
+y_pred
+testing_set$Incidencia
+y_compared = data.frame(y_pred,testing_set$Incidencia )
+
+plot( testing_set$Incidencia  - y_pred)
+```
+
+
+## Regresión RF
+
+```{r}
+library(randomForest)
+set.seed(1234)
+regression = randomForest(x = training_set[, 1:4],
+                          y = training_set$Incidencia,
+                          ntree = 100)
+y_pred = predict(regression, newdata =testing_set )
+RMSE(y_pred, testing_set$Incidencia)
+R2(y_pred, testing_set$Incidencia)
+y_pred
+testing_set$Incidencia
+y_compared = data.frame(y_pred,testing_set$Incidencia )
+
+plot( testing_set$Incidencia  - y_pred)
+```
+
