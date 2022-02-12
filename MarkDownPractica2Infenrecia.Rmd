@@ -40,7 +40,7 @@ data_datosCP <- read.csv(ruta_Excel_datosCP, header=TRUE, sep=";")
 names (data_datosCP) = c("Year", "CodProv", "CIE10", "Provincia", 
                          "SumaTotal", "value_f", "value_m")
 data_final <- merge(data_datosCP, CalidadAire_Final, by = c("Year", "CodProv"))
-data_final$Incidencia = round( (data_final$SumaTotal * 100000) / data_final$Population , 2 )
+data_final$Prevalencia = round( (data_final$SumaTotal * 100000) / data_final$Population , 2 )
 head(data_final)
 
 ```
@@ -53,11 +53,11 @@ You can also embed plots, for example:
 boxplot(data_final$SumaTotal)
 ```
 ```{r}
-boxplot(data_final$Incidencia)
+boxplot(data_final$Prevalencia)
 ```
 ## Correlación
 ```{r}
-Data_Correlacion_SumaTotal <- select(data_final, Factor_PM10, Factor_PM2.5, Factor_NO2, Factor_O3, Incidencia)
+Data_Correlacion_SumaTotal <- select(data_final, Factor_PM10, Factor_PM2.5, Factor_NO2, Factor_O3, Prevalencia)
 round(cor(Data_Correlacion_SumaTotal),4)
 library(ggplot2)
 library(GGally)
@@ -67,7 +67,7 @@ ggpairs(Data_Correlacion_SumaTotal, lower = list(continuos="smooth"), diag = lis
 ## Selección variables menor pValues para la regresión
 
 ```{r}
-modelo <- lm(Incidencia~Factor_PM10 + Factor_PM2.5 + Factor_NO2 + Factor_O3, data = Data_Correlacion_SumaTotal)
+modelo <- lm(Prevalencia~Factor_PM10 + Factor_PM2.5 + Factor_NO2 + Factor_O3, data = Data_Correlacion_SumaTotal)
 summary(modelo)
 ```
 ## Regresión lineal múltiple
@@ -79,38 +79,38 @@ library(caTools)
 library(caret)
 
 set.seed(123)
-split = sample.split(Data_Correlacion_SumaTotal$Incidencia, SplitRatio = 0.8)
+split = sample.split(Data_Correlacion_SumaTotal$Prevalencia, SplitRatio = 0.8)
 training_set = subset(Data_Correlacion_SumaTotal, split == TRUE)
 testing_set = subset(Data_Correlacion_SumaTotal, split == FALSE)
 
-regression =  lm(Incidencia~Factor_PM10 + Factor_PM2.5  + Factor_O3, data = training_set)
+regression =  lm(Prevalencia~Factor_PM10 + Factor_PM2.5  + Factor_O3, data = training_set)
 
 y_pred = predict(regression, newdata = testing_set)
 
-RMSE(y_pred, testing_set$Incidencia)
-R2(y_pred, testing_set$Incidencia)
+RMSE(y_pred, testing_set$Prevalencia)
+R2(y_pred, testing_set$Prevalencia)
 y_pred
-testing_set$Incidencia
-y_compared = data.frame(y_pred,testing_set$Incidencia )
+testing_set$Prevalencia
+y_compared = data.frame(y_pred,testing_set$Prevalencia )
 
-plot( testing_set$Incidencia  - y_pred)
+plot( testing_set$Prevalencia  - y_pred)
 ```
 ## Refresión SVR
 
 ```{r}
 library(e1071)
-regression = svm(formula = Incidencia~Factor_PM10 + Factor_PM2.5  + Factor_O3,
+regression = svm(formula = Prevalencia~Factor_PM10 + Factor_PM2.5  + Factor_O3,
                  data = training_set, 
                  type = "eps-regression", 
                  kernel = "radial")
 y_pred = predict(regression, newdata =testing_set )
-RMSE(y_pred, testing_set$Incidencia)
-R2(y_pred, testing_set$Incidencia)
+RMSE(y_pred, testing_set$Prevalencia)
+R2(y_pred, testing_set$Prevalencia)
 y_pred
-testing_set$Incidencia
-y_compared = data.frame(y_pred,testing_set$Incidencia )
+testing_set$Prevalencia
+y_compared = data.frame(y_pred,testing_set$Prevalencia )
 
-plot( testing_set$Incidencia  - y_pred)
+plot( testing_set$Prevalencia  - y_pred)
 ```
 
 
@@ -120,15 +120,15 @@ plot( testing_set$Incidencia  - y_pred)
 library(randomForest)
 set.seed(1234)
 regression = randomForest(x = training_set[, 1:4],
-                          y = training_set$Incidencia,
+                          y = training_set$Prevalencia,
                           ntree = 100)
 y_pred = predict(regression, newdata =testing_set )
-RMSE(y_pred, testing_set$Incidencia)
-R2(y_pred, testing_set$Incidencia)
+RMSE(y_pred, testing_set$Prevalencia)
+R2(y_pred, testing_set$Prevalencia)
 y_pred
-testing_set$Incidencia
-y_compared = data.frame(y_pred,testing_set$Incidencia )
+testing_set$Prevalencia
+y_compared = data.frame(y_pred,testing_set$Prevalencia )
 
-plot( testing_set$Incidencia  - y_pred)
+plot( testing_set$Prevalencia  - y_pred)
 ```
 
