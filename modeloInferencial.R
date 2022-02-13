@@ -70,7 +70,7 @@ boxplot(data_final$SumaTotal)
 boxplot(data_final$Prevalencia)
 
 #Seleccionar las columnas que nos interesan para realizar la correlaci?n
-Data_Correlacion_SumaTotal <- select(data_final, Factor_PM10, Factor_PM2.5, Factor_NO2, Factor_O3, Prevalencia)
+Data_Correlacion_SumaTotal <- select(data_final, Year ,Factor_PM10, Factor_PM2.5, Factor_NO2, Factor_O3, Prevalencia)
 View(Data_Correlacion_SumaTotal)
 
 
@@ -85,11 +85,11 @@ library(GGally)
 ggpairs(Data_Correlacion_SumaTotal, lower = list(continuos="smooth"), diag = list(continuos="barDiag"), axislabels="none")
 
 #Generaci?n del modelo
-modelo <- lm(data_final~Factor_PM10 + Factor_PM2.5 + Factor_NO2 + Factor_O3, data = scaled)
+modelo <- lm(Prevalencia~Factor_PM10 + Factor_PM2.5 + Factor_NO2 + Factor_O3, data = Data_Correlacion_SumaTotal)
 summary(modelo)
 
 #Backguard elminitation
-modelo2 = lm(Prevalencia~Factor_PM10 + Factor_PM2.5  + Factor_O3, data = scaled)
+modelo2 = lm(Prevalencia~Factor_PM10 + Factor_PM2.5  + Factor_O3, data = Data_Correlacion_SumaTotal)
 summary(modelo2)
 
 # Evaluando el modelo
@@ -148,5 +148,49 @@ testing_set$Prevalencia
 y_compared = data.frame(y_pred,testing_set$Prevalencia )
 
 plot( testing_set$Prevalencia  - y_pred)
+
+plot(data_final$Prevalencia~ data_final$Year)
+
+
+
+###  Intervalo de confianza bilateral para la diferencia de medias 
+
+n <- length(data_final$Prevalencia)    # El tamaño válido de la muestra
+media <- mean(data_final$Prevalencia) # la media 
+desv <- sd(data_final$Prevalencia)  # La desviación estándar. Datos históricos
+nivelconfianza = 0.80
+
+error.est <- desv/sqrt(n) # Calculamos el error estándar
+margen.error <- 1.644854 * error.est # nivel de confianza de 90% 
+
+
+lim.inf <- media - margen.error # Límite inferior del intervalo
+lim.inf
+
+lim.sup <- media + margen.error # Límite superior del intervalo
+lim.sup
+
+install.packages("BSDA")
+library(BSDA)
+
+zsum.test(mean.x=media,sigma.x=desv, n.x=n,conf.level=nivelconfianza)
+
+
+par(mfrow=c(1, 2))
+require(car)  # Debe instalar antes el paquete car
+qqPlot(data_final$Prevalencia, pch=19,
+       main='QQplot para la prevalencia',
+       xlab='Cuantiles teóricos',
+       ylab='Cuantiles muestrales')
+
+hist(data_final$Prevalencia , freq=TRUE,
+     main='Histograma para la prevalencia',
+     xlab='Prevalencia',
+     ylab='Frecuencia')
+
+
+
+
+
 
 
