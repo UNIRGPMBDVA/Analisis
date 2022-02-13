@@ -160,15 +160,15 @@ media <- mean(data_final$Prevalencia) # la media
 desv <- sd(data_final$Prevalencia)  # La desviación estándar. Datos históricos
 nivelconfianza = 0.80
 
-error.est <- desv/sqrt(n) # Calculamos el error estándar
-margen.error <- 1.644854 * error.est # nivel de confianza de 90% 
+#error.est <- desv/sqrt(n) # Calculamos el error estándar
+#margen.error <- 1.644854 * error.est # nivel de confianza de 90% 
 
 
-lim.inf <- media - margen.error # Límite inferior del intervalo
-lim.inf
+#lim.inf <- media - margen.error # Límite inferior del intervalo
+#lim.inf
 
-lim.sup <- media + margen.error # Límite superior del intervalo
-lim.sup
+#lim.sup <- media + margen.error # Límite superior del intervalo
+#lim.sup
 
 install.packages("BSDA")
 library(BSDA)
