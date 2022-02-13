@@ -158,7 +158,7 @@ plot(data_final$Prevalencia~ data_final$Year)
 n <- length(data_final$Prevalencia)    # El tamaño válido de la muestra
 media <- mean(data_final$Prevalencia) # la media 
 desv <- sd(data_final$Prevalencia)  # La desviación estándar. Datos históricos
-nivelconfianza = 0.80
+nivelconfianza = 0.95
 
 #error.est <- desv/sqrt(n) # Calculamos el error estándar
 #margen.error <- 1.644854 * error.est # nivel de confianza de 90% 
